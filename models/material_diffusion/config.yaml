@@ -6,8 +6,8 @@ unet_config:
   target: iid.material_diffusion.ldm.diffusionmodule.IIDUNetModel
   params:
     image_size: 32  # legacy
-    in_channels: 11
-    out_channels: 8
+    in_channels: 7
+    out_channels: 4
     model_channels: 320
     attention_resolutions:
     - 4
@@ -59,9 +59,8 @@ diffusion_config:
   timesteps: 1000
   first_stage_key:
   - albedo
-  - material
   cond_stage_key: im
-  channels: 8
+  channels: 4
   scale_factor: 0.18215
   use_ema: false
   concat_keys:

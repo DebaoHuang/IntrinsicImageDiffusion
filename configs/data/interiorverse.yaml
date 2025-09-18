@@ -10,7 +10,7 @@ sampling_cfg:
     indices: null  # To be evaluated samples
 dataset_cfg:
   _target_: iid.material_diffusion.data.InteriorVerseDataset
-  root: ${paths.data_dir}InteriorVerse/dataset_85/
+  root: /local/scratch1/degbo/albedo/Marigold/data/osu_albedo/
   features_to_include: [ "im", "albedo", "material" ]
   cache_size: 1
   stage: null

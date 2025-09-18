@@ -20,7 +20,7 @@ data:
     batch_size: 10
     num_workers: 10
   dataset_cfg:
-    features_to_include: [ "im", "albedo", "material" ]
+    features_to_include: [ "im", "albedo" ]
 
 model:
   _target_: iid.material_diffusion.iid.IntrinsicImageDiffusion
@@ -28,8 +28,8 @@ model:
     target: iid.material_diffusion.ldm.diffusionmodule.IIDUNetModel
     params:
       image_size: 32  # legacy
-      in_channels: 11
-      out_channels: 8
+      in_channels: 7
+      out_channels: 4
       model_channels: 320
       attention_resolutions:
         - 4
@@ -81,9 +81,8 @@ model:
     timesteps: 1000
     first_stage_key:
       - albedo
-      - material
     cond_stage_key: im
-    channels: 8
+    channels: 4
     scale_factor: 0.18215
     use_ema: false
     concat_keys:
@@ -121,7 +120,7 @@ trainer:
   min_epochs: 250
   max_epochs: 250
   accelerator: gpu
-  devices: 4
+  devices: 1
   sync_batchnorm: True
   strategy:
     _target_: pytorch_lightning.strategies.ddp.DDPStrategy

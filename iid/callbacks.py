@@ -505,7 +505,6 @@ class DiffusionSampler(ScheduledCallback):
 
         output = Batch(
             albedo=output[:, :3],
-            material=output[:, 3:]
         )
         return output
 

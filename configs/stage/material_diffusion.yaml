@@ -11,7 +11,8 @@ defaults:
 # ======================== DATAMODULE ============================
 
 data:
-  input_path: res/test.png
+  input_path: data/InteriorVerse/2025/osu_office/20250314_am_sunny/0220_im.exr
+  gt_path: data/InteriorVerse/2025/osu_office/20250314_am_sunny/0220_albedo.exr
   include_metadata: True
 
 output:

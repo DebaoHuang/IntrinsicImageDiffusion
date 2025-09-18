@@ -42,6 +42,12 @@ def material_diffusion(cfg: DictConfig):
         img = transforms(img).unsqueeze(0).to(device)
         original_size = img.shape[-2:]
         image_id = os.path.splitext(os.path.basename(img_path))[0]
+
+        gt_path = cfg.data.gt_path
+        module_logger.info(f"Loading GT <{gt_path}>")
+        gt = load_linear_image(gt_path)
+        gt = transforms(gt).unsqueeze(0).to(device)
+
     else:
         # Use datamodule
         datamodule_cfg = cfg.data
@@ -67,6 +73,8 @@ def material_diffusion(cfg: DictConfig):
     # Load weights
     module_logger.info(f"Loading model <{cfg.model.ckpt_path}>")
     ckpt = torch.load(cfg.model.ckpt_path)
+    if "state_dict" in list(ckpt.keys()):
+        ckpt = ckpt["state_dict"]
     model.load_state_dict(ckpt)
     model = model.to(device)
 
@@ -87,8 +95,8 @@ def material_diffusion(cfg: DictConfig):
         if not cfg.output.as_dataset:
             # Save with suffix
             to_pil(preds[:3]).save(os.path.join(out_folder, f"{image_id}_albedo.png"))
-            to_pil(preds[3]).save(os.path.join(out_folder, f"{image_id}_roughness.png"))
-            to_pil(preds[4]).save(os.path.join(out_folder, f"{image_id}_metal.png"))
+            # to_pil(preds[3]).save(os.path.join(out_folder, f"{image_id}_roughness.png"))
+            # to_pil(preds[4]).save(os.path.join(out_folder, f"{image_id}_metal.png"))
         else:
             # Save as dataset
             writeEXR(preds[:3].cpu().permute(1, 2, 0).numpy(), os.path.join(out_folder, "albedo", f"{image_id}.exr"))
@@ -112,10 +120,15 @@ def material_diffusion(cfg: DictConfig):
         logs = Batch({
             "input": Linear_2_SRGB()(img[0]),
             "albedo_pred": preds[:3],
-            "roughness_pred": preds[3],
-            "metal_pred": preds[4],
+            # "roughness_pred": preds[3],
+            # "metal_pred": preds[4],
         })
         log_anything(logger, "stage2_material", logs)
+    
+    from torchmetrics.image import PeakSignalNoiseRatio
+    psnr_metric = PeakSignalNoiseRatio().to(device)
+    psnr = psnr_metric(preds[:3].clamp(0, 1),gt.squeeze().clamp(0, 1))
+    module_logger.info(f"PSNR {psnr}")
 
 
 def predict_materials(model, img, num_samples, sampling_batch_size=1, original_size=None):

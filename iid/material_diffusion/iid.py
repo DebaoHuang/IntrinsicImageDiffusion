@@ -176,7 +176,7 @@ class IntrinsicImageDiffusion(LightningModule):
 
         # Decode the samples
         y = self.decode(z)
-        y = torch.cat((y['albedo'], y['material']), dim=1)
+        y = y['albedo']
         material = (y + 1) / 2
 
         if return_intermediates:

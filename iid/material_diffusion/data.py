@@ -15,32 +15,54 @@ class InteriorVerseDataset(IIDDataset):
     def load_dataset(self, allow_missing_features=False):
         # Collect the data
         data = Batch()
-
-        # Collect the scene list
-        scene_list = []
-        for scene_folder_path in self.split_list:
-            # Check if the scene folder exists
-            if os.path.exists(os.path.join(self.root, scene_folder_path)):
-                scene_list.append(scene_folder_path)
-
-        # Collect the features
-        self.module_logger.debug("Collecting features")
         data['samples'] = Batch(default=Batch)
         data['sample_ids'] = []
 
-        for scene_folder in scene_list:
-            scene_folder_path = os.path.join(self.root, scene_folder)
-            for file_name in sorted(os.listdir(scene_folder_path)):
-                if "_" not in file_name:
-                    continue
+        self.module_logger.debug("Collecting features")
 
-                view_id = file_name.split('_')[0]
+        for line in self.split_list:
+            line = line.strip()
+            if not line:
+                continue
+
+            paths = line.split()
+            first_path = paths[0]
+
+            if self.stage.name == "Test" or self.stage.name == "Validation":
+                parts = first_path.split('/')
+                filename = parts[-1]
+                view_id = filename.split('.')[0]
+                scene_folder = '/'.join(parts[:-1])
+                sample_id = os.path.join(scene_folder, view_id)
+            else:
+                parts = first_path.split('/')
+                filename = parts[-1]
+                view_id = filename.split('_')[0]
+                scene_folder = '/'.join(parts[:-1])
                 sample_id = os.path.join(scene_folder, view_id)
 
-                if sample_id not in data['samples']:
-                    data['sample_ids'].append(sample_id)
+            if sample_id not in data['samples']:
+                data['sample_ids'].append(sample_id)
+
+                if self.stage.name == "Test" or self.stage.name == "Validation":
                     for feature in self.features_to_include:
-                        data['samples'][sample_id][feature] = os.path.join(scene_folder, f"{view_id}_{feature}.exr")
+                        if feature == "mask":
+                            continue
+                        elif feature == "im":
+                            feature_filename = f"{view_id}.png"
+                        elif feature == "albedo":
+                            feature_filename = f"{view_id}.exr"
+                        feature_path = os.path.join(scene_folder, feature_filename)
+                        data['samples'][sample_id][feature] = feature_path
+
+                else:
+                    for feature in self.features_to_include:
+                        if feature == "mask":
+                            feature_filename = f"{view_id}_{feature}.png"
+                        else:
+                            feature_filename = f"{view_id}_{feature}.exr"
+                        feature_path = os.path.join(scene_folder, feature_filename)
+                        data['samples'][sample_id][feature] = feature_path
 
         # Sanity check
         lengths = [len(list(data['samples'][sample_id].keys())) for sample_id in data['samples'].keys()]
